@@ -1,6 +1,9 @@
 (function(){
 const CFG=window.DESK_CONFIG||{};const TZ='Asia/Singapore';
-const STATUSES=['Draft','Pending Review','Approved','Scheduled','Published','Superseded'];
+const STATUSES=['Draft','In production','On Hold','Pending Review','Approved','Scheduled','Published','Superseded'];
+// 'Latest Files (Review)' cell: 'Label: https://drive.google.com/... | Label: https://...'. Only Google Drive/Docs links are rendered.
+function fileLinks(raw){return String(raw||'').split(/\s+\|\s+/).map(seg=>{const m=seg.trim().match(/^(.+?):\s*(https:\/\/(?:drive|docs)\.google\.com\/\S+)$/);return m?{label:m[1].trim(),url:m[2]}:null}).filter(Boolean)}
+const filesHTML=(p,cls)=>p.files&&p.files.length?`<div class="files${cls?' '+cls:''}"><span class="fl">Drive</span>${p.files.map(f=>`<a href="${esc(f.url)}" target="_blank" rel="noreferrer" title="${esc(f.label)}">${esc(f.label.replace(/\s*\(.*\)\s*$/,''))}</a>`).join('')}</div>`:'';
 const $=s=>document.querySelector(s);const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const todayISO=()=>new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 const addDays=(iso,n)=>{const[y,m,d]=iso.split('-').map(Number);const t=new Date(Date.UTC(y,m-1,d));t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10)};
@@ -9,7 +12,7 @@ function norm(p){const raw=(p.date||'').trim();const m=raw.match(/(\d{4})-(\d{2}
   const hm=(p.time||'').match(/^(\d{1,2}):(\d{2})/);const hr=hm?+hm[1]:null;
   const slot=hr==null?'none':(hr>=7&&hr<=9)?'morning':(hr>=19&&hr<=21)?'evening':'other';
   return{...p,date:m?`${m[1]}-${m[2]}-${m[3]}`:'',tbd:/tbd/i.test(raw),status:STATUSES.includes(p.status)?p.status:'Unfiled',
-    inBuffer:!!(p.bufferId||'').trim(),plats:platforms(p.bufferId,m?`${m[1]}-${m[2]}-${m[3]}`:''),slot,clock:hm?`${hm[1].padStart(2,'0')}:${hm[2]}`:(p.time||'')}}
+    inBuffer:!!(p.bufferId||'').trim(),files:fileLinks(p.files),filesNote:fileLinks(p.files).length?'':String(p.files||'').trim(),plats:platforms(p.bufferId,m?`${m[1]}-${m[2]}-${m[3]}`:''),slot,clock:hm?`${hm[1].padStart(2,'0')}:${hm[2]}`:(p.time||'')}}
 const PLAT_ORDER={ig:0,reel:1,story:2,tt:3,yt:4,other:5};
 const slotOf=c=>{const m=String(c||'').match(/^(\d{1,2}):/);if(!m)return'none';const h=+m[1];return(h>=7&&h<=9)?'morning':(h>=19&&h<=21)?'evening':'other'};
 function platforms(raw,rowDate){const out=[];const yr=(rowDate||todayISO()).slice(0,4);
@@ -59,8 +62,8 @@ function slotCard(label,p,sats){sats=sats||[];
   if(!p&&!sats.length)return`<div class="card slot open"><p class="label">${label} SGT · Open</p><span class="t mute">Nothing on the sheet for this slot.</span></div>`;
   if(!p){const x=sats[0];return`<div class="card slot"><p class="label">${label} SGT · Reel / Short</p>${sats.map(x=>`<button type="button" class="satmain" data-row="${x.post.row}"><span class="t">${esc(x.title)}</span>${badgeHTML(x.plats,true)}<span class="mute">${esc(x.clock)} · from row ${x.post.row}</span></button>`).join('')}</div>`}
   const live=p.status==='Published'?`Published ${esc(p.clock)}`:p.status==='Scheduled'&&p.inBuffer?'In Buffer':p.status;
-  return`<div class="card slot"><button type="button" class="satmain" data-row="${p.row}"><p class="label">${label} SGT · ${esc(live)}</p><span class="t">${esc(p.title)}</span>${badgeHTML(p.plats)}<span class="mute">${esc(p.pillar)}</span></button>${sats.length?`<div class="also"><span class="label">Also in this slot</span>${sats.map(satLine).join('')}</div>`:''}</div>`}
-function rowBtn(label,p){return p?`<button type="button" class="row" data-row="${p.row}"><span class="tm">${esc(label)}</span><span class="rt"><span>${esc(p.title)}</span>${badgeHTML(p.plats)}</span><span class="st">${esc(p.status==='Scheduled'&&p.inBuffer?'In Buffer':p.status)}</span></button>`:`<div class="row empty"><span class="tm">${label}</span><span>Open</span></div>`}
+  return`<div class="card slot"><button type="button" class="satmain" data-row="${p.row}"><p class="label">${label} SGT · ${esc(live)}</p><span class="t">${esc(p.title)}</span>${badgeHTML(p.plats)}<span class="mute">${esc(p.pillar)}</span></button>${filesHTML(p)}${sats.length?`<div class="also"><span class="label">Also in this slot</span>${sats.map(satLine).join('')}</div>`:''}</div>`}
+function rowBtn(label,p){return p?`<button type="button" class="row" data-row="${p.row}"><span class="tm">${esc(label)}</span><span class="rt"><span>${esc(p.title)}</span>${badgeHTML(p.plats)}</span><span class="st">${esc(p.status==='Scheduled'&&p.inBuffer?'In Buffer':p.status)}</span></button>`+filesHTML(p,'inrow'):`<div class="row empty"><span class="tm">${label}</span><span>Open</span></div>`}
 const nowSG=()=>{const f=new Intl.DateTimeFormat('en-CA',{timeZone:TZ,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());const g=k=>f.find(p=>p.type===k).value;return`${g('year')}-${g('month')}-${g('day')} ${g('hour')}:${g('minute')}`};
 function satStatus(x){const past=(x.date+' '+x.clock)<nowSG();return past?(x.post.status==='Published'?'Sent':'Past slot'):(x.post.inBuffer?'In Buffer':x.post.status)}
 function satRow(label,x){return`<button type="button" class="row sat" data-row="${x.post.row}"><span class="tm">${esc(label)}</span><span class="rt"><span>${esc(x.title)}</span>${badgeHTML(x.plats,true)}</span><span class="st">${esc(satStatus(x))}</span></button>`}
@@ -91,7 +94,7 @@ function render(data){
   $('#fresh').textContent='Live from sheet · '+new Intl.DateTimeFormat('en-GB',{timeZone:TZ,day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(g)+' SGT';}
 function openRow(r){const p=POSTS.find(x=>x.row==r);if(!p)return;
   const f=[['Row',p.row],['Date',p.date?fmt(p.date,true):(p.tbd?'TBD':'Undated')],['Time',p.time],['Status',p.status],['Pillar',p.pillar],['Format',p.format],['Topic',p.topic],['Buffer',p.plats.length?'':'—'],['Reach thesis',p.thesis],['Hook',p.hook]];
-  $('#detailBody').innerHTML=`<h2>${esc(p.title)}</h2><dl>${f.filter(x=>x[1]).map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}${p.plats.length?`<dt>Platforms</dt><dd><ul class="pl">${p.plats.map(b=>`<li><span class="pb pb-${b.k}">${esc(b.t)}</span>${b.at?` <span>@ ${esc(fmt(b.at.date)+' '+b.at.clock)} SGT</span>`:''} <span class="mute">${esc(b.id)}</span></li>`).join('')}</ul></dd>`:''}</dl>${p.instagram?`<p><a style="color:var(--gold)" href="${esc(p.instagram)}" target="_blank" rel="noreferrer">Open the live post</a></p>`:''}<p><a style="color:var(--gold)" target="_blank" rel="noreferrer" href="${esc((CFG.SHEET_URL||'')+'#gid=0&range=A'+p.row)}">Open row in sheet</a></p>`;
+  $('#detailBody').innerHTML=`<h2>${esc(p.title)}</h2><dl>${f.filter(x=>x[1]).map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}${p.plats.length?`<dt>Platforms</dt><dd><ul class="pl">${p.plats.map(b=>`<li><span class="pb pb-${b.k}">${esc(b.t)}</span>${b.at?` <span>@ ${esc(fmt(b.at.date)+' '+b.at.clock)} SGT</span>`:''} <span class="mute">${esc(b.id)}</span></li>`).join('')}</ul></dd>`:''}</dl>${p.files.length?`<h3 style="margin-top:1rem">Latest files (review)</h3><ul class="pl">${p.files.map(f=>`<li><a style="color:var(--gold)" href="${esc(f.url)}" target="_blank" rel="noreferrer">${esc(f.label)}</a></li>`).join('')}</ul>`:(p.filesNote?`<p class="mute">Latest files: ${esc(p.filesNote)}</p>`:'')}${p.instagram?`<p><a style="color:var(--gold)" href="${esc(p.instagram)}" target="_blank" rel="noreferrer">Open the live post</a></p>`:''}<p><a style="color:var(--gold)" target="_blank" rel="noreferrer" href="${esc((CFG.SHEET_URL||'')+'#gid=0&range=A'+p.row)}">Open row in sheet</a></p>`;
   $('#detail').showModal()}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-row]');if(b)openRow(b.dataset.row)});
 const bust=u=>u+(u.includes('?')?'&':'?')+'t='+Date.now();
