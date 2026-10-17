@@ -3,9 +3,28 @@
 <meta name="theme-color" content="#0e1210">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,460;0,6..72,560;1,6..72,460&family=Outfit:wght@300;400;500;600&display=swap">
-<link rel="stylesheet" href="style.css"></head><body>
-<header class="top"><div><p class="kicker">TheLongevityInsider.Asia</p><h1>Insider Desk</h1></div>
+<link rel="stylesheet" href="style.css">
+<style>
+.plats{display:flex;flex-wrap:wrap;gap:.3rem;margin:.35rem 0 .1rem}
+.pb{display:inline-flex;align-items:center;font-size:.68rem;line-height:1;letter-spacing:.04em;padding:.28rem .5rem;border-radius:999px;border:1px solid var(--line);background:var(--lift);color:var(--paper);white-space:nowrap}
+.pb::before{content:"";width:.45rem;height:.45rem;border-radius:50%;margin-right:.35rem;background:currentColor;opacity:.9}
+.pb-ig{color:#e9b6c8;border-color:#5a3a47}.pb-reel{color:#d9a0f0;border-color:#4d3858}.pb-story{color:#f0c9a0;border-color:#584738}
+.pb-tt{color:#7fe3dc;border-color:#2f5552}.pb-yt{color:#ff8a80;border-color:#5c3330}.pb-other{color:var(--mute)}
+.row .rt{display:flex;flex-direction:column;min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem;align-items:center;margin-top:.5rem}
+ul.pl{margin:0;gap:.35rem}
+.pb-at{border-style:dashed}
+.satmain{display:block;width:100%;text-align:left;background:none;border:0;color:inherit;padding:0}
+.satmain+.satmain{margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--line)}
+.also{margin-top:.6rem;padding-top:.5rem;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:.25rem}
+.satline{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;background:none;border:0;color:inherit;text-align:left;padding:0;font-size:.85rem}
+.satline .plats{margin:0}
+.row.sat .rt>span:first-child{font-style:italic;color:#d8cfbf}
+</style>
+</head><body>
+<header class="top"><div><p class="kicker">TheLongevityInsider.Asia</p><h1>Insider Desk</h1>
+<div class="legend" aria-label="Platform key"><span class="label">Platforms</span><span class="pb pb-ig">IG carousel</span><span class="pb pb-reel">IG Reel</span><span class="pb pb-tt">TikTok</span><span class="pb pb-yt">YouTube Short</span></div></div>
 <div class="meta"><span id="fresh">Loading live sheet…</span> <button id="reload" type="button">Refresh</button> <a id="sheetlink" target="_blank" rel="noreferrer">Open the sheet</a></div></header>
 <main id="app"><p class="mute">Loading…</p></main>
 <dialog id="detail"><form method="dialog"><button class="close" aria-label="Close">×</button></form><div id="detailBody"></div></dialog>
-<script src="config.js"></script><script src="app.js"></script></body></html>
+<script src="config.js"></script><script src="app.js?v=stagger2"></script></body></html>
